@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRYPTO MINER TYCOON</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body {
+            background-color: #0b0816;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ⏳ Loading Screen Styling */
+        #loading-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #06040d;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .loader-title {
+            font-size: 28px;
+            color: #00ffcc;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0,255,204,0.5);
+        }
+        .progress-container {
+            width: 250px;
+            height: 10px;
+            background: #1a1530;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #00ffcc;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ffcc, #ff0055);
+            animation: loadProgress 3s forwards;
+        }
+        @keyframes loadProgress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        /* 🎮 Main Game Container */
+        .game-container {
+            width: 360px;
+            background: #120e24;
+            border: 2px solid #ff0055;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(255, 0, 85, 0.4);
+        }
+        h1 { font-size: 22px; color: #ff0055; margin: 0 0 15px 0; letter-spacing: 1px; }
+        
+        .score-board {
+            background: #1c1635;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #31275c;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .score-box div { font-size: 12px; color: #aaa; }
+        .score-box span { font-size: 18px; color: #00ffcc; font-weight: bold; }
+
+        /* 🪙 Neon Crypto Coin (No Images Needed!) */
+        .crypto-coin {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff0055 0%, #7c0032 100%);
+            border: 5px solid #00ffcc;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.6);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 65px;
+            user-select: none;
+            transition: transform 0.05s ease;
+        }
+        .crypto-coin:active { transform: scale(0.92); box-shadow: 0 0 30px rgba(0, 255, 204, 0.9); }
+
+        /* 🛒 Upgrades Shop */
+        .shop-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .upgrade-btn {
+            background: #1c1635;
+            color: #fff;
+            border: 1px solid #ff0055;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .upgrade-btn:disabled { background: #0e0b1a; border-color: #444; color: #555; cursor: not-allowed; }
+        .upgrade-btn span.cost { color: #ffcc00; }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loader-title">SETUP GAME ENGINE...</div>
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <h1>CRYPTO MINER TYCOON</h1>
+        
+        <div class="score-board">
+            <div class="score-box">
+                <div>Crypto Coins</div>
+                <span id="coins-display">0</span>
+            </div>
+            <div class="score-box">
+                <div>Mining Speed (CPS)</div>
+                <span id="cps-display">0</span>
+            </div>
+        </div>
+
+        <div class="crypto-coin" id="coin-trigger">🪙</div>
+
+        <div class="shop-section">
+            <button class="upgrade-btn" id="buy-rig-1">
+                <span>⚡ Basic USB Miner (+1 Click)</span>
+                <span class="cost" id="cost-rig-1">Cost: 15</span>
+            </button>
+            <button class="upgrade-btn" id="buy-rig-2">
+                <span>🖥️ GTX 1060 Rig (+1 Auto CPS)</span>
+                <span class="cost" id="cost-rig-2">Cost: 50</span>
+            </button>
+            <button class="upgrade-btn" id="buy-rig-3">
+                <span>🚀 RTX 4090 Server (+10 Auto CPS)</span>
+                <span class="cost" id="cost-rig-3">Cost: 250</span>
+            </button>
+        </div>
+    </div>
+
+<script>
+    // Game Variables
+    let coins = 0;
+    let clickPower = 1;
+    let autoCps = 0;
+
+    let costRig1 = 15;
+    let costRig2 = 50;
+    let costRig3 = 250;
+
+    // DOM Catchers
+    const coinsDisplay = document.getElementById('coins-display');
+    const cpsDisplay = document.getElementById('cps-display');
+    const coinTrigger = document.getElementById('coin-trigger');
+    
+    const btnRig1 = document.getElementById('buy-rig-1');
+    const btnRig2 = document.getElementById('buy-rig-2');
+    const btnRig3 = document.getElementById('buy-rig-3');
+
+    // 🔊 Audio Setup (Makkhan Sound Effect)
+    const clickSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav');
+    const upgradeSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav');
+    clickSound.volume = 0.4;
+    upgradeSound.volume = 0.5;
+
+    // ⏳ Loading Screen Auto-Dismiss
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const loader = document.getElementById('loading-screen');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
+        }, 3000); // 3 seconds screen time
+    });
+
+    // Refresh Display Engine
+    function updateDisplay() {
+        coinsDisplay.innerText = Math.floor(coins);
+        cpsDisplay.innerText = autoCps;
+
+        btnRig1.disabled = coins < costRig1;
+        btnRig2.disabled = coins < costRig2;
+        btnRig3.disabled = coins < costRig3;
+    }
+
+    // Interactive Tap Logic
+    coinTrigger.addEventListener('click', () => {
+        coins += clickPower;
+        clickSound.currentTime = 0;
+        clickSound.play().catch(e => console.log("Sound ready"));
+        updateDisplay();
+    });
+
+    // Upgrade Rig 1
+    btnRig1.addEventListener('click', () => {
+        if (coins >= costRig1) {
+            coins -= costRig1;
+            clickPower += 1;
+            costRig1 = Math.floor(costRig1 * 1.5);
+            document.getElementById('cost-rig-1').innerText = `Cost: ${costRig1}`;
+            upgradeSound.play().catch(e => {});
+            updateDisplay();
+        }
+    });
+
+    // Upgrade Rig 2
+    btnRig2.addEventListener('click', () => {
+        if (coins >= costRig2) {
+            coins -= costRig2;
+            autoCps += 1;
+            costRig2 = Math.floor(costRig2 * 1.5);
+            document.getElementById('cost-rig-2').innerText = `Cost: ${costRig2}`;
+            upgradeSound.play().catch(e => {});
+            updateDisplay();
+        }
+    });
+
+    // Upgrade Rig 3
+    btnRig3.addEventListener('click', () => {
+        if (coins >= costRig3) {
+            coins -= costRig3;
+            autoCps += 10;
+            costRig3 = Math.floor(costRig3 * 1.6);
+            document.getElementById('cost-rig-3').innerText = `Cost: ${costRig3}`;
+            upgradeSound.play().catch(e => {});
+            updateDisplay();
+        }
+    });
+
+    // Auto Miner Loop (CPS)
+    setInterval(() => {
+        if (autoCps > 0) {
+            coins += (autoCps / 10);
+            updateDisplay();
+        }
+    }, 100);
+
+    // Run Engine Initializer
+    updateDisplay();
+</script>
+</body>
+</html>
+
