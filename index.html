@@ -8,7 +8,6 @@
         * { 
             box-sizing: border-box; 
             font-family: 'Segoe UI', sans-serif; 
-            /* 👇 Is se poori game me kahin bhi tap karne par blue box nahi aayega */
             -webkit-tap-highlight-color: transparent;
             -webkit-user-select: none;
             user-select: none;
@@ -56,7 +55,7 @@
             width: 0%;
             height: 100%;
             background: linear-gradient(90deg, #00ffcc, #ff0055);
-            animation: loadProgress 3s forwards;
+            animation: loadProgress 2s forwards;
         }
         @keyframes loadProgress {
             0% { width: 0%; }
@@ -102,7 +101,6 @@
             align-items: center;
             font-size: 65px;
             transition: transform 0.05s ease;
-            -webkit-tap-highlight-color: transparent;
         }
         .crypto-coin:active { transform: scale(0.92); box-shadow: 0 0 30px rgba(0, 255, 204, 0.9); }
 
@@ -126,7 +124,6 @@
             font-weight: bold;
             font-size: 13px;
             transition: 0.2s;
-            -webkit-tap-highlight-color: transparent;
         }
         .upgrade-btn:disabled { background: #0e0b1a; border-color: #444; color: #555; cursor: not-allowed; }
         .upgrade-btn span.cost { color: #ffcc00; }
@@ -192,11 +189,38 @@
     const btnRig2 = document.getElementById('buy-rig-2');
     const btnRig3 = document.getElementById('buy-rig-3');
 
-    // 🔊 Audio Setup (Makkhan Sound Effect)
-    const clickSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav');
-    const upgradeSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav');
-    clickSound.volume = 0.5;
-    upgradeSound.volume = 0.6;
+    // 🔊 Native Web Audio Context Synthesizer (No Links Needed!)
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playNativeSound(frequency, duration, type) {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+
+            osc.type = type || 'sine';
+            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {
+            console.log("Audio Error: ", e);
+        }
+    }
 
     // ⏳ Loading Screen Auto-Dismiss
     window.addEventListener('DOMContentLoaded', () => {
@@ -204,7 +228,7 @@
             const loader = document.getElementById('loading-screen');
             loader.style.opacity = '0';
             setTimeout(() => loader.style.display = 'none', 500);
-        }, 3000);
+        }, 2000);
     });
 
     // Refresh Display Engine
@@ -217,14 +241,11 @@
         btnRig3.disabled = coins < costRig3;
     }
 
-    // Interactive Tap Logic with Audio Bypass
+    // Interactive Tap Logic
     coinTrigger.addEventListener('click', () => {
         coins += clickPower;
-        
-        // Sound restriction reset trigger
-        clickSound.currentTime = 0;
-        clickSound.play().catch(e => console.log("Audio waiting for touch integration"));
-        
+        // Mechanical Retro Click Sound (High pitch, short duration)
+        playNativeSound(800, 0.08, 'triangle');
         updateDisplay();
     });
 
@@ -235,8 +256,9 @@
             clickPower += 1;
             costRig1 = Math.floor(costRig1 * 1.5);
             document.getElementById('cost-rig-1').innerText = `Cost: ${costRig1}`;
-            upgradeSound.currentTime = 0;
-            upgradeSound.play().catch(e => {});
+            // Cash Register / Upgrade Sound (Two notes jump)
+            playNativeSound(523.25, 0.1, 'sine');
+            setTimeout(() => playNativeSound(659.25, 0.15, 'sine'), 80);
             updateDisplay();
         }
     });
@@ -248,8 +270,8 @@
             autoCps += 1;
             costRig2 = Math.floor(costRig2 * 1.5);
             document.getElementById('cost-rig-2').innerText = `Cost: ${costRig2}`;
-            upgradeSound.currentTime = 0;
-            upgradeSound.play().catch(e => {});
+            playNativeSound(523.25, 0.1, 'sine');
+            setTimeout(() => playNativeSound(659.25, 0.15, 'sine'), 80);
             updateDisplay();
         }
     });
@@ -261,8 +283,8 @@
             autoCps += 10;
             costRig3 = Math.floor(costRig3 * 1.6);
             document.getElementById('cost-rig-3').innerText = `Cost: ${costRig3}`;
-            upgradeSound.currentTime = 0;
-            upgradeSound.play().catch(e => {});
+            playNativeSound(523.25, 0.1, 'sine');
+            setTimeout(() => playNativeSound(659.25, 0.15, 'sine'), 80);
             updateDisplay();
         }
     });
